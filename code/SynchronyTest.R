@@ -154,7 +154,7 @@ df.synchrony.JR  <- bind_rows(df.synchrony.JR,df.synchrony.i)
 }
 
 write_csv(df.synchrony.JR,
-          "~/Documents/Projects/Synchrony/results/df.synchrony.JR")
+          "~/Documents/Projects/Synchrony/results/df.synchrony.JR.csv")
 # Find synchrony long and short for all species pair in KC
 
 df.synchrony.KC <- NULL
@@ -191,5 +191,5 @@ df.synchrony.i <- data.frame( couple = paste(specieslist.KC.comb$Var1[i],
 df.synchrony.KC  <- bind_rows(df.synchrony.KC,df.synchrony.i)
 }
 write_csv(df.synchrony.KC,
-          "~/Documents/Projects/Synchrony/results/df.synchrony.KC")
+          "~/Documents/Projects/Synchrony/results/df.synchrony.KC.csv")
 
