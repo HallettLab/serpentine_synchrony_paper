@@ -1,5 +1,5 @@
 # Synchrony project: team Jeli
-# Authors: Jeremy Colins and Lisa Buche
+# Authors: Jeremy Collings and Lisa Buche
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #---- 1. Setup ------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -15,6 +15,7 @@ library(ggpattern)
 library(wesanderson)
 library(colorspace)
 library(broom)
+library(wsyn)
 
 # Import data
 #JR
@@ -192,4 +193,73 @@ df.synchrony.KC  <- bind_rows(df.synchrony.KC,df.synchrony.i)
 }
 write_csv(df.synchrony.KC,
           "~/Documents/Projects/Synchrony/results/df.synchrony.KC.csv")
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#---- 2. Visualizing Synchrony ------
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+df.synchrony.JR <- read.csv("results/df.synchrony.JR.csv")
+df.synchrony.KC <- read.csv("results/df.synchrony.KC.csv")
+
+long.df.synchrony.JR <- pivot_longer(df.synchrony.JR, 
+                                     cols = c("aggresShort", "aggresLong"), 
+                                     names_to = c("timescale"), 
+                                     values_to = c("varRatio"))
+
+long.df.synchrony.KC <- pivot_longer(df.synchrony.KC, 
+                                     cols = c("aggresShort", "aggresLong"), 
+                                     names_to = c("timescale"), 
+                                     values_to = c("varRatio"))
+
+ggplot(data = long.df.synchrony.JR[which(long.df.synchrony.JR$varRatio != 2), ], 
+       aes(x = varRatio, fill = timescale)) +
+  geom_histogram(position = "identity", alpha = .5) + 
+  xlab("Variance Ratio") + 
+  theme_classic(base_size = 15) + ylab("Frequency") + 
+  geom_vline(xintercept = 1, linetype = "dashed", size = 1) + 
+  scale_fill_manual(values = c("#FFBE0B", "#7340A0"), 
+                     name = "Timescale", labels = c("Long", "Short")) 
+
+JR_VarRatio <- ggplot(data = long.df.synchrony.JR[which(long.df.synchrony.JR$varRatio != 2), ], 
+       aes(x = timescale, y = varRatio)) +
+  geom_violin() + geom_jitter() + 
+  xlab("Timescale") + 
+  theme_classic(base_size = 15) + ylab("Variance Ratio") +
+  scale_x_discrete(labels = c("Long", "Short")) + 
+  geom_hline(yintercept = 1, linetype = "dashed", size = 1)
+  
+ggsave("figures/JR_VarRatio.pdf",
+       plot = JR_VarRatio)
+
+table(long.df.synchrony.JR$varRatio[which(long.df.synchrony.JR != 2)] > 1, 
+      long.df.synchrony.JR$timescale[which(long.df.synchrony.JR != 2)])
+
+# generally less synchrony, but maybe marginally more at short timescales??
+
+ggplot(data = long.df.synchrony.KC[which(long.df.synchrony.KC$varRatio != 2), ], 
+       aes(x = varRatio, fill = timescale)) +
+  geom_histogram(position = "identity", alpha = .5) + 
+  xlab("Variance Ratio") + 
+  theme_classic(base_size = 15) + ylab("Frequency") + 
+  geom_vline(xintercept = 1, linetype = "dashed", size = 1) + 
+  scale_fill_manual(values = c("#FFBE0B", "#7340A0"), 
+                    name = "Timescale", labels = c("Long", "Short")) 
+
+KC_VarRatio <- ggplot(data = long.df.synchrony.KC[which(long.df.synchrony.KC$varRatio != 2), ], 
+       aes(x = timescale, y = varRatio)) +
+  geom_violin() + geom_jitter() + 
+  xlab("Timescale") + 
+  theme_classic(base_size = 15) + ylab("Variance Ratio") +
+  scale_x_discrete(labels = c("Long", "Short")) + 
+  geom_hline(yintercept = 1, linetype = "dashed", size = 1)
+
+ggsave("figures/KC_VarRatio.pdf",
+       plot = KC_VarRatio)
+
+table(long.df.synchrony.KC$varRatio[which(long.df.synchrony.KC != 2)] > 1, 
+      long.df.synchrony.KC$timescale[which(long.df.synchrony.KC != 2)])
+
+# generally much more synchrony, especially at shorter timescales
+
+
 
