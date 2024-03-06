@@ -6,6 +6,12 @@ no2raw <- lapply(paste0(NO2dat_loc,list.files(NO2dat_loc)), read.csv)
 dim(no2raw[[1]])
 head(no2raw[[1]])
 
+par(mfrow=c(5,5), mar=c(1,1,1,1))
+for (i in 1:length(no2raw)){
+	plot(no2raw[[i]]$Daily.Max.1.hour.NO2.Concentration)	
+}
+
+
 date <- unlist(lapply(no2raw, function(x){x$Date}))
 no2con <- unlist(lapply(no2raw, function(x){x$Daily.Max.1.hour.NO2.Concentration}))
 
@@ -53,9 +59,23 @@ head(no2)
 
 par(mfrow=c(1,1))
 plot(time$monthMean, type='l')
+saveRDS(time, paste(dat_loc, "no2MonthlyMean.RDS"))
 
+library(wysn)
+times=1:dim(time)[1]
+ts=time$monthMean
+ts=cleandat(ts, times=times, clev=1)
+wtres <- wt(ts$cdat, times)
+par(mfrow=c(1,1), mar=c(4,4,2,1))
+plotmag(wtres)
 
-
+pdf("no2monthly.pdf", width=10, height=5)
+par(mfrow=c(1,2), mar=c(3,4,2,1), mgp=c(1.7,0.5,0))
+#layout(t(c(1,2)), width=c(0.5,2))
+plotmag(wtres)
+plot(time$monthMean, type='l', xlab="months", ylab="montly mean of daoly max [NO2] (ppb)")
+title(main="montly air NO2", outer=T, line=-1)
+dev.off()
 
 
 
