@@ -1,0 +1,126 @@
+---
+title: "KC_VegData Species Timeseries"
+author: "Marissa Lane-Massee"
+date: "2024-03-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(lubridate)
+
+calcSE <- function(x){
+  x <- x[!is.na(x)]
+  sd(x)/sqrt(length(x))
+}
+
+```
+
+
+```{r}
+
+df = read.csv('KC_VegData.csv')
+
+head(df)
+
+KC <- df 
+
+head(KC)
+
+######## CLEAN & PREP DATA ########
+
+### remove NAs ###
+
+#KC_no_NA <- na.omit(KC)
+
+### pivot longer ###
+
+pivotKC <- KC %>%
+  pivot_longer(cols = c("Nonnative.annual.grass", "Moss", "Achillea.millefolium", "Achyrachanea.mollis", "Acmispon.wrangelianus", "Aegilops.triuncialis", "Agoseris.heterophylla", "Allium.serra", "Amsinckia.intermedia", "Ancistrocarphus.filagineus", "Aphanes.occidentalis", "Artemesia.californica", "Asteraceae", "Astragalus.gambellianus", "Athysanus.pusilus", "Avena", "Bromus.berteroanus", "Bromus.carinatus", "Bromus.diandrus", "Bromus.hordeaceus", "Bromus.madritensis", "Bromus.trinii", "Brodiaea.terrestris", "Brodiaea.spp", "Calochortus.argillosus", "Calochortus.venustus", "Calochortus.spp", "Calandrinia.ciliata", "Calycadenia.multiglandulosa", "Calystegia.subacaulis", "Calycadenia.spp", "Camissonia.graciliflora", "Carduus.pycnocephalus", "Castilleja.attenuata", "Castilleja.densiflora", "Castilleja.erianthus", "Castilleja.exserta.ssp.exserta", "Castilleja.purpurescens", "Castilleja.rubicundula.ssp.lithospermoides", "Caulanthus.lasiophylla", "Centaurea.solstitialis", "Centaurea.solstitialis.broad", "Chaenactis.spp","Chlorogalum.pomeridianum", "Clarkia.spp","Claytonia.exigua.ssp.exigua","Claytonia.gypsophiloides", "Claytonia.perfoliata", "Clarkia.spp", "Collinsia.heterophylla", "Crassula.connata", "Croton.setigerus", "Cryptantha.flaccida", "Cuscuta.subinclusa","Dodder.spp", "Daucus.pusillus","Delphinium.variegatum","Delphinium.spp","Deschampsia.danthoniodes","Dichelostemma.capitatum", "Dudleya.setchellii", "Elymus.glaucus", "Elymus.multisetus","Epilobium.minitum", "Epilobium.spp","Eriophyllum.confertiflorum", "Eriogonum.glaucus","Eriogonum.nudum","Eriogonum.roseum","Eriogonum.vimineum","Erigeron.reductus.angustatus","Erodium.botrys","Erodium.cicutarium","Erodium.moschatum","Erodium.spp","Erysimum.capitatum","Eschscholzia.californica", "Euphorbia.spathulata", "Festuca.bromoides", "Festuca.microstachys", "Festuca.myuros", "Festuca.perennis", "Filago.gallica", "Frangula.californica", "Galium.aparine", "Galium.porrigens", "Galium.spp", "Gastridium.phleoides", "Gilia.achillaeafolia", "Gilia.clivorum", "Gilia.tricolor", "Hemizonia.congesta","Hesperevax.sparsiflora","Hordeum.brachyantherum","Hordeum.marinum","Koeleria.macrantha","Lactuca.spp","Lamarckia.aurea","Lasthenia.californica","Layia.gaillardiodes","Layia.platyglossa","Lessingia.nemaclada","Leptosiphon.ambiguus","Leptosiphon.androsaceus","Leptosiphon.bicolor","Leptosiphon.grandiflorus","Leptosiphon.liniflorus","Lepidium.nitidum","Leptosiphon.parviflorus","Leptosiphon.spp","Lessingia.micradenia.glabrata","Lewisia.rediviva","Linanthus.dichotomous","Lomatium.caruifolium","Lomatium.dasycarpum","Lomatium.macrocarpum","Lomatium.utriculatum","Lomatium.spp","Lupinus.bicolor","Lupinus.spp","Madia.spp","Melica.californica","Melica.torreyana","Melica.spp","Micropus.californicus","Microseris.douglasii","Mimulus.douglasii","Minuartia.douglasii","Minuartia.pusilla","Monolopia.major","Muilla.maritima","Navarretia.heterodoxa","Pellaea.andromedifolia","Pentachaeta.bellidiflora","Pentagramma.triangularis","Perideridia.kelloggii","Phacelia.californica","Phacelia.distans","Phacelia.imbricata","Phlox.gracilis","Platystemon.californicus","Plantago.erecta","Poa.secunda.ssp.secunda","Poa.spp","Polypodium.spp","Primula.hendersonii","Psilocarphus.brevissimus","Pterostegia.drymariodes","Quercus.durata","Ranunculus.californica","Rigiopappus.leptoclodus","Salvia.columbariae","Sanicula.bipinnatifida","Sanicula.tuberosa","Senecio.spp","Sherardia.arvensis","Sidalcea.diplosypha","Silene.californica","Silene.gallica","Sisyrinchium.bellum","Stellaria.media","Stellaria.nitens","Stipa.pulchra","Streptanthus.albidus", "Stylocline.spp","Tall.evax","Tetrapteron.graciliflora","Toxicoscordion.fremontii","Trifolium.albopurpureum","Trifolium.depauperatum","Triphysaria.eriantha","Triphysaria.pusilla","Trifolium.gracilentum","Trifolium.hirtum","Trifolium.inflated","Trifolium.microdon","Trifolium.willdenovii", "Trifolium.spp","Trichostemma.lanceolatum","Triteleia.laxa","Unknown.annual.grass","Unknown.bunch.grass","Unknown"), names_to = "species", values_to = "cover.value")
+
+### group_by & summarize ###
+
+groupedKC <- pivotKC %>%
+  group_by(species,Year) %>%
+  summarise(meancoverval = mean(cover.value), secoverval = calcSE(cover.value))
+
+head(groupedKC)
+
+###### GRAPH #####
+
+# unknown + moss #
+KCfilterunk <- groupedKC %>%
+  filter(species=="Nonnative.annual.grass" | species == "Moss" | species =="Unknown.annual.grass"| species == "Unknown.bunch.grass"| species == "Unknown")
+
+ggplot(KCfilterunk, aes(x=Year,y=meancoverval))+
+  geom_point(aes(x=Year, y=meancoverval, color = species))+
+  geom_line(aes(x=Year, y=meancoverval, color = species))+ facet_wrap(~species)
+
+# A B #
+
+KCfilterAB <- groupedKC %>%
+  filter(species== "Achillea.millefolium" | species == "Achyrachanea.mollis"| species == "Acmispon.wrangelianus"| species == "Aegilops.triuncialis" | species == "Agoseris.heterophylla" | species == "Allium.serra"| species == "Amsinckia.intermedia"| species == "Ancistrocarphus.filagineus" | species == "Aphanes.occidentalis" | species == "Artemesia.californica" | species == "Asteraceae" | species == "Astragalus.gambellianus" | species == "Athysanus.pusilus" | species == "Avena" |species=="Bromus.berteroanus"| species == "Bromus.carinatus"| species == "Bromus.diandrus" | species == "Bromus.hordeaceus" | species == "Bromus.madritensis" | species == "Bromus.trinii" | species == "Brodiaea.terrestris"| species == "Brodiaea.spp")
+
+ggplot(KCfilterAB, aes(x=Year,y=meancoverval))+
+  geom_point(aes(x=Year, y=meancoverval, color = species))+
+  geom_line(aes(x=Year, y=meancoverval, color = species))+ facet_wrap(~species)
+
+# C #
+
+KCfilterC <- groupedKC %>%
+  filter(species=="Calochortus.argillosus" | species == "Calochortus.venustus"| species =="Calochortus.spp" | species == "Calandrinia.ciliata"| species == "Calycadenia.multiglandulosa" | species == "Calystegia.subacaulis"| species== "Calycadenia.spp" | species == "Camissonia.graciliflora" | species == "Carduus.pycnocephalus"| species == "Castilleja.attenuata"| species == "Castilleja.densiflora"| species == "Castilleja.erianthus"| species == "Castilleja.exserta.ssp.exserta" | species == "Castilleja.purpurescens" | species == "Castilleja.rubicundula.ssp.lithospermoides" | species == "Caulanthus.lasiophylla"| species == "Centaurea.solstitialis"| species == "Centaurea.solstitialis.broad"| species == "Chaenactis.spp"| species =="Chlorogalum.pomeridianum"| species == "Clarkia.spp"| species =="Claytonia.exigua.ssp.exigua"| species =="Claytonia.gypsophiloides"| species == "Claytonia.perfoliata"| species == "Clarkia.spp"| species == "Collinsia.heterophylla"| species == "Crassula.connata"| species == "Croton.setigerus"| species == "Cryptantha.flaccida"| species == "Cuscuta.subinclusa")
+
+ggplot(KCfilterC, aes(x=Year,y=meancoverval))+
+  geom_point(aes(x=Year, y=meancoverval, color = species))+
+  geom_line(aes(x=Year, y=meancoverval, color = species))+ facet_wrap(~species)
+
+# D E F # 
+
+KCfilterDEF <- groupedKC %>%
+  filter(species=="Dodder.spp"| species == "Daucus.pusillus"| species =="Delphinium.variegatum"| species =="Delphinium.spp"| species =="Deschampsia.danthoniodes"| species =="Dichelostemma.capitatum"| species == "Dudleya.setchellii"| species == "Elymus.glaucus"| species == "Elymus.multisetus"| species =="Epilobium.minitum"| species == "Epilobium.spp"| species =="Eriophyllum.confertiflorum"| species == "Eriogonum.glaucus"| species =="Eriogonum.nudum"| species =="Eriogonum.roseum"| species =="Eriogonum.vimineum"| species =="Erigeron.reductus.angustatus"| species =="Erodium.botrys"| species =="Erodium.cicutarium"| species =="Erodium.moschatum"| species =="Erodium.spp"| species =="Erysimum.capitatum"| species =="Eschscholzia.californica"| species == "Euphorbia.spathulata"| species == "Festuca.bromoides"| species == "Festuca.microstachys"| species == "Festuca.myuros"| species == "Festuca.perennis"| species == "Filago.gallica"| species == "Frangula.californica")
+
+           
+ggplot(KCfilterDEF, aes(x=Year,y=meancoverval))+
+  geom_point(aes(x=Year, y=meancoverval, color = species))+
+  geom_line(aes(x=Year, y=meancoverval, color = species))+ facet_wrap(~species)
+
+# G H I J K L #
+
+KCfilterGIL <- groupedKC %>%
+  filter(species=="Galium.aparine"| species == "Galium.porrigens"| species == "Galium.spp"| species == "Gastridium.phleoides"| species == "Gilia.achillaeafolia"| species == "Gilia.clivorum"| species == "Gilia.tricolor"| species == "Hemizonia.congesta"| species =="Hesperevax.sparsiflora"| species =="Hordeum.brachyantherum"| species =="Hordeum.marinum"| species =="Koeleria.macrantha"| species =="Lactuca.spp"| species =="Lamarckia.aurea"| species =="Lasthenia.californica"| species =="Layia.gaillardiodes"| species =="Layia.platyglossa"| species =="Lessingia.nemaclada"| species =="Leptosiphon.ambiguus"| species =="Leptosiphon.androsaceus"| species =="Leptosiphon.bicolor"| species =="Leptosiphon.grandiflorus"| species =="Leptosiphon.liniflorus"| species =="Lepidium.nitidum"| species =="Leptosiphon.parviflorus"| species =="Leptosiphon.spp"| species =="Lessingia.micradenia.glabrata"| species =="Lewisia.rediviva"| species =="Linanthus.dichotomous"| species =="Lomatium.caruifolium"| species =="Lomatium.dasycarpum"| species =="Lomatium.macrocarpum"| species =="Lomatium.utriculatum"| species =="Lomatium.spp"| species =="Lupinus.bicolor"| species =="Lupinus.spp")
+         
+ggplot(KCfilterGIL, aes(x=Year,y=meancoverval))+
+  geom_point(aes(x=Year, y=meancoverval, color = species))+
+  geom_line(aes(x=Year, y=meancoverval, color = species))+ facet_wrap(~species)
+
+
+# M N O P Q R #
+
+KCfilterMOR <- groupedKC %>%
+  filter(species== "Madia.spp"| species =="Melica.californica"| species =="Melica.torreyana"| species =="Melica.spp"| species =="Micropus.californicus"| species =="Microseris.douglasii"| species =="Mimulus.douglasii"| species =="Minuartia.douglasii"| species =="Minuartia.pusilla"| species =="Monolopia.major"| species =="Muilla.maritima"| species =="Navarretia.heterodoxa"| species =="Pellaea.andromedifolia"| species =="Pentachaeta.bellidiflora"| species =="Pentagramma.triangularis"| species =="Perideridia.kelloggii"| species =="Phacelia.californica"| species =="Phacelia.distans"| species =="Phacelia.imbricata"| species =="Phlox.gracilis"| species =="Platystemon.californicus"| species =="Plantago.erecta"| species =="Poa.secunda.ssp.secunda"| species =="Poa.spp"| species =="Polypodium.spp"| species =="Primula.hendersonii"| species =="Psilocarphus.brevissimus"| species =="Pterostegia.drymariodes"| species =="Quercus.durata"| species =="Ranunculus.californica"| species =="Rigiopappus.leptoclodus")
+
+ggplot(KCfilterMOR, aes(x=Year,y=meancoverval))+
+  geom_point(aes(x=Year, y=meancoverval, color = species))+
+  geom_line(aes(x=Year, y=meancoverval, color = species))+ facet_wrap(~species)
+
+# S T #
+KCfilterST <- groupedKC %>%
+filter(species=="Salvia.columbariae"| species =="Sanicula.bipinnatifida"| species =="Sanicula.tuberosa"| species =="Senecio.spp"| species =="Sherardia.arvensis"| species =="Sidalcea.diplosypha"| species =="Silene.californica"| species =="Silene.gallica"| species =="Sisyrinchium.bellum"| species =="Stellaria.media"| species =="Stellaria.nitens"| species =="Stipa.pulchra"| species =="Streptanthus.albidus"| species == "Stylocline.spp"| species =="Tall.evax"| species =="Tetrapteron.graciliflora"| species =="Toxicoscordion.fremontii"| species =="Trifolium.albopurpureum"| species =="Trifolium.depauperatum"| species =="Triphysaria.eriantha"| species =="Triphysaria.pusilla"| species =="Trifolium.gracilentum"| species =="Trifolium.hirtum"| species =="Trifolium.inflated"| species =="Trifolium.microdon"| species =="Trifolium.willdenovii"| species == "Trifolium.spp"| species =="Trichostemma.lanceolatum"| species =="Triteleia.laxa")
+
+ggplot(KCfilterST, aes(x=Year,y=meancoverval))+
+  geom_point(aes(x=Year, y=meancoverval, color = species))+
+  geom_line(aes(x=Year, y=meancoverval, color = species))+ facet_wrap(~species)
+
+###
+
+
+
+```
+
+
+```{r pressure, echo=FALSE}
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
