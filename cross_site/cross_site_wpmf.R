@@ -79,6 +79,19 @@ for(i in 1:length(species)) {
   ## join sites
   both <- rbind(tmp.avgJR2, tmp.avgKC2)
   
+  ## vis
+  both.long <- both %>%
+    pivot_longer(cols = 2:34, names_to = "year", values_to = "cover")
+  
+  both.long$year <- as.numeric(both.long$year)
+  
+  ggplot(both.long, aes(x=year, y=cover)) +
+    geom_line() +
+    facet_wrap(~site, ncol = 1, nrow = 2) + 
+    ggtitle(sp) + ylab("mean site cover")
+    
+  ggsave(paste0("cross_site/prelim_figs/", sp, "_cross_site_timeseries.png"), width = 6, height = 3.5)
+  
   ## put in matrix format
   both.matrix <- as.matrix(both[,-1])
   
@@ -89,11 +102,29 @@ for(i in 1:length(species)) {
   both.clean <- as.matrix(cleandat(both.matrix, times, clev=1)$cdat)
   
   ## do wavelet phasor mean field analysis
-  temp <- wpmf(both.clean, times, sigmethod = "quick")
+  temp_wpmf <- wpmf(both.clean, times, sigmethod = "fft")
   
-  ## save figure
+  ## wavelet mean field
+  temp_wmf <- wmf(both.clean, times)
+  
+  ## power
+  pow <- power(temp_wmf)
+
+  ## save figures
   png(paste0("cross_site/prelim_figs/", sp, "_cross_site_wpmf.png"), width = 480, height =480)
-  plotmag(temp)
+  plotmag(temp_wpmf)
   dev.off()
+  
+  png(paste0("cross_site/prelim_figs/", sp, "_cross_site_wmf.png"), width = 480, height =480)
+  plotmag(temp_wmf)
+  dev.off()
+  
+  png(paste0("cross_site/prelim_figs/", sp, "_cross_site_wmf_power.png"), width = 600, height =400)
+  plot(log(1/pow$timescales),pow$power,type='l',lty="solid",xaxt="n",
+       xlab="Timescales",ylab="Power")
+  xlocs<-c(min(pow$timescales),pretty(pow$timescales,n=8))
+  graphics::axis(side=1,at=log(1/xlocs),labels=xlocs)
+  dev.off()
+  
   
 }
