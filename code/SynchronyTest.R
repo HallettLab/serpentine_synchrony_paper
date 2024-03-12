@@ -16,6 +16,7 @@ library(wesanderson)
 library(colorspace)
 library(broom)
 library(wsyn)
+library(readxl)
 
 # Import data
 #JR
@@ -25,7 +26,7 @@ head(JR_cover)
 names(JR_cover)
 specieslist.JR <- names(JR_cover)
 specieslist.JR <- specieslist.JR [!specieslist.JR %in% c("ID","year","plot", "fppt",
-                                          "gppt", "tcover")]
+                                                         "gppt", "tcover")]
 # interesting species accoridng to Jake
 specieslist.JR.short <-c("BRMO","PLER","CAMU","MIDO",
                          "LOMU","LACA","VUMI","LAPL")
@@ -33,7 +34,7 @@ specieslist.JR.short <-c("BRMO","PLER","CAMU","MIDO",
 JR_cover <- JR_cover %>%
   gather(specieslist.JR, key="species",value="abundance") %>%
   dplyr::filter(species %in% specieslist.JR.short) %>%
-  aggregate(abundance ~ species +  year, sum) %>% # this a simplification but maybe later worth investigating
+  aggregate(abundance ~ species +  year, mean) %>% # this a simplification but maybe later worth investigating
   spread(species, abundance)
 
 # Quick visualisation
@@ -63,19 +64,19 @@ specieslist.KC <- specieslist.KC[!specieslist.KC %in% c("year",
                                                         "quadrat_old", "quadrat_new",
                                                         "transect2", "quadrat2",
                                                         "gopher +/-","litter","rock",
- 
-                                                                                                               "bare")]
+                                                        
+                                                        "bare")]
 # interesting species accoridng to Jake
 specieslist.KC.short <- c("bromus hordeaceus","plantago erecta",
-                    "microseris douglasii","lasthenia californica",
-                    "festuca perennis","festuca microstachys","layia platyglossa"  )
+                          "microseris douglasii","lasthenia californica",
+                          "festuca perennis","festuca microstachys","layia platyglossa"  )
 
 # Filter and aggregate by year
 KC_cover <- KC_cover %>%
   gather(specieslist.KC, key="species",value="abundance") %>%
   mutate(abundance = as.numeric(abundance)) %>%
   dplyr::filter(species %in% specieslist.KC.short) %>%
-  aggregate(abundance ~ species + year, sum) %>%# this a simplification but maybe later worth investigating
+  aggregate(abundance ~ species + year, mean) %>%# this a simplification but maybe later worth investigating
   mutate(species = case_when(species =="bromus hordeaceus" ~ "BRHO",
                              species =="plantago erecta"~ "PLER",
                              species =="microseris douglasii" ~ "MIDO",
@@ -121,10 +122,10 @@ specieslist.KC.comb <- as.data.frame(expand.grid(specieslist.KC.short,specieslis
 df.synchrony.JR <- NULL
 for ( i in 1:nrow(specieslist.JR.comb)){
   df.synchrony.i <- t(as.matrix(data.frame(Ni= JR_cover[,specieslist.JR.comb$Var1[i]],
-                                          Nj =JR_cover[,specieslist.JR.comb$Var2[i]]))) 
+                                           Nj =JR_cover[,specieslist.JR.comb$Var2[i]]))) 
   # you can have more than two species at a time, but it is a start I guess
   
-
+  
   tryCatch( { vr.trial <- tsvreq_classic(df.synchrony.i); print(res) }
             , error = function(e) {an.error.occured <<- TRUE})
   if(exists("vr.trial")){
@@ -144,15 +145,18 @@ for ( i in 1:nrow(specieslist.JR.comb)){
     aggresShort <- NA
     synchrony.significance <- NA
   }
-
-
-df.synchrony.i <- data.frame( couple = paste(specieslist.JR.comb$Var1[i],
-                                             specieslist.JR.comb$Var2[i],sep=""),
-                              aggresShort= aggresShort,
-                              aggresLong= aggresLong,
-                              synchrony.significance=synchrony.significance)
-df.synchrony.JR  <- bind_rows(df.synchrony.JR,df.synchrony.i)
+  
+  
+  df.synchrony.i <- data.frame( couple = paste(specieslist.JR.comb$Var1[i],
+                                               specieslist.JR.comb$Var2[i],sep="_"),
+                                species1=specieslist.JR.comb$Var1[i],
+                                species2=specieslist.JR.comb$Var2[i],
+                                aggresShort= aggresShort,
+                                aggresLong= aggresLong,
+                                synchrony.significance=synchrony.significance)
+  df.synchrony.JR  <- bind_rows(df.synchrony.JR,df.synchrony.i)
 }
+head(df.synchrony.JR)
 
 write_csv(df.synchrony.JR,
           "~/Documents/Projects/Synchrony/results/df.synchrony.JR.csv")
@@ -184,12 +188,14 @@ for ( i in 1:nrow(specieslist.KC.comb)){
     aggresShort <- NA
     synchrony.significance <- NA
   }
-df.synchrony.i <- data.frame( couple = paste(specieslist.KC.comb$Var1[i],
-                                             specieslist.KC.comb$Var2[i],sep=""),
-                              aggresShort= aggresShort,
-                              aggresLong= aggresLong,
-                              synchrony.significance=synchrony.significance)
-df.synchrony.KC  <- bind_rows(df.synchrony.KC,df.synchrony.i)
+  df.synchrony.i <- data.frame( couple = paste(specieslist.KC.comb$Var1[i],
+                                               specieslist.KC.comb$Var2[i],sep="_"),
+                                species1=specieslist.JR.comb$Var1[i],
+                                species2=specieslist.JR.comb$Var2[i],
+                                aggresShort= aggresShort,
+                                aggresLong= aggresLong,
+                                synchrony.significance=synchrony.significance)
+  df.synchrony.KC  <- bind_rows(df.synchrony.KC,df.synchrony.i)
 }
 write_csv(df.synchrony.KC,
           "~/Documents/Projects/Synchrony/results/df.synchrony.KC.csv")
@@ -211,32 +217,7 @@ long.df.synchrony.KC <- pivot_longer(df.synchrony.KC,
                                      names_to = c("timescale"), 
                                      values_to = c("varRatio"))
 
-ggplot(data = long.df.synchrony.JR[which(long.df.synchrony.JR$varRatio != 2), ], 
-       aes(x = varRatio, fill = timescale)) +
-  geom_histogram(position = "identity", alpha = .5) + 
-  xlab("Variance Ratio") + 
-  theme_classic(base_size = 15) + ylab("Frequency") + 
-  geom_vline(xintercept = 1, linetype = "dashed", size = 1) + 
-  scale_fill_manual(values = c("#FFBE0B", "#7340A0"), 
-                     name = "Timescale", labels = c("Long", "Short")) 
-
-JR_VarRatio <- ggplot(data = long.df.synchrony.JR[which(long.df.synchrony.JR$varRatio != 2), ], 
-       aes(x = timescale, y = varRatio)) +
-  geom_violin() + geom_jitter() + 
-  xlab("Timescale") + 
-  theme_classic(base_size = 15) + ylab("Variance Ratio") +
-  scale_x_discrete(labels = c("Long", "Short")) + 
-  geom_hline(yintercept = 1, linetype = "dashed", size = 1)
-  
-ggsave("figures/JR_VarRatio.pdf",
-       plot = JR_VarRatio)
-
-table(long.df.synchrony.JR$varRatio[which(long.df.synchrony.JR != 2)] > 1, 
-      long.df.synchrony.JR$timescale[which(long.df.synchrony.JR != 2)])
-
-# generally less synchrony, but maybe marginally more at short timescales??
-
-ggplot(data = long.df.synchrony.KC[which(long.df.synchrony.KC$varRatio != 2), ], 
+JR_VarRatio_hist <-ggplot(data = long.df.synchrony.JR[which(long.df.synchrony.JR$varRatio != 2), ], 
        aes(x = varRatio, fill = timescale)) +
   geom_histogram(position = "identity", alpha = .5) + 
   xlab("Variance Ratio") + 
@@ -245,15 +226,46 @@ ggplot(data = long.df.synchrony.KC[which(long.df.synchrony.KC$varRatio != 2), ],
   scale_fill_manual(values = c("#FFBE0B", "#7340A0"), 
                     name = "Timescale", labels = c("Long", "Short")) 
 
-KC_VarRatio <- ggplot(data = long.df.synchrony.KC[which(long.df.synchrony.KC$varRatio != 2), ], 
-       aes(x = timescale, y = varRatio)) +
+ggsave("~/Documents/Projects/Synchrony/figures/JR_VarRatio_hist.pdf",
+       plot = JR_VarRatio_hist )
+
+gJR_VarRatio <- ggplot(data = long.df.synchrony.JR[which(long.df.synchrony.JR$varRatio != 2), ], 
+                      aes(x = timescale, y = varRatio)) +
   geom_violin() + geom_jitter() + 
   xlab("Timescale") + 
   theme_classic(base_size = 15) + ylab("Variance Ratio") +
   scale_x_discrete(labels = c("Long", "Short")) + 
   geom_hline(yintercept = 1, linetype = "dashed", size = 1)
 
-ggsave("figures/KC_VarRatio.pdf",
+ggsave("~/Documents/Projects/Synchrony/figures/JR_VarRatio.pdf",
+       plot = JR_VarRatio)
+
+table(long.df.synchrony.JR$varRatio[which(long.df.synchrony.JR != 2)] > 1, 
+      long.df.synchrony.JR$timescale[which(long.df.synchrony.JR != 2)])
+
+# generally less synchrony, but maybe marginally more at short timescales??
+
+KC_VarRatio_hist <- ggplot(data = long.df.synchrony.KC[which(long.df.synchrony.KC$varRatio != 2), ], 
+       aes(x = varRatio, fill = timescale)) +
+  geom_histogram(position = "identity", alpha = .5) + 
+  xlab("Variance Ratio") + 
+  theme_classic(base_size = 15) + ylab("Frequency") + 
+  geom_vline(xintercept = 1, linetype = "dashed", size = 1) + 
+  scale_fill_manual(values = c("#FFBE0B", "#7340A0"), 
+                    name = "Timescale", labels = c("Long", "Short")) 
+
+ggsave("~/Documents/Projects/Synchrony/figures/KC_VarRatio_hist.pdf",
+       plot = KC_VarRatio_hist)
+
+KC_VarRatio <- ggplot(data = long.df.synchrony.KC[which(long.df.synchrony.KC$varRatio != 2), ], 
+                      aes(x = timescale, y = varRatio)) +
+  geom_violin() + geom_jitter() + 
+  xlab("Timescale") + 
+  theme_classic(base_size = 15) + ylab("Variance Ratio") +
+  scale_x_discrete(labels = c("Long", "Short")) + 
+  geom_hline(yintercept = 1, linetype = "dashed", size = 1)
+
+ggsave("~/Documents/Projects/Synchrony/figures/KC_VarRatio.pdf",
        plot = KC_VarRatio)
 
 table(long.df.synchrony.KC$varRatio[which(long.df.synchrony.KC != 2)] > 1, 
@@ -262,4 +274,73 @@ table(long.df.synchrony.KC$varRatio[which(long.df.synchrony.KC != 2)] > 1,
 # generally much more synchrony, especially at shorter timescales
 
 
+library(igraph)
+
+# Create data
+df.synchrony.JR.matrix.short <- df.synchrony.JR %>%
+  select(species1,species2,aggresShort) %>%
+  spread(species2,aggresShort) %>%
+  column_to_rownames("species1")%>%
+  as.matrix()
+
+
+network.JR.short.pos <- unname(abs(df.synchrony.JR.matrix.short))
+network.JR.short <- graph_from_adjacency_matrix(network.JR.short.pos>0)
+E(network.JR.short)$weight <- as.numeric(network.JR.short.pos)
+widths <- E(network.JR.short)$weight*2
+color.mat <-  as.numeric(df.synchrony.JR.matrix.short)
+color.mat[which(color.mat > 1)] <- 1
+color.mat[which(color.mat < 1)] <- 3
+E(network.JR.short)$lty <- color.mat
+ 
+plot(network.JR.short , layout=layout.circle,
+     main="JR short synchrony",
+     vertex.label = colnames(df.synchrony.JR.matrix.short),
+     vertex.frame.color = "transparent",
+     vertex.label.family="Helvetica",
+     #vertex.label.cex = 1,
+     #vertex.label.dist= 2,
+     #vertex.label.degree = c(pi/2,pi/2,-pi/2),
+     vertex.label.color = "black",
+     vertex.color = "grey80",
+     vertex.size = 30,
+     edge.width = widths,
+     edge.color = "black",
+     edge.arrow.size = 0.5,
+     edge.curved = TRUE)
+
+
+
+alphamat.pos <- unname(abs(df.synchrony.JR.matrix.short))
+g <- igraph::graph_from_adjacency_matrix(alphamat.pos  > 0)
+E(g)$weight <- as.numeric(alphamat.pos )
+widths <- E(g)$weight*2
+color.mat <-  as.numeric(df.synchrony.JR.matrix.short)
+color.mat[which(color.mat > 1)] <- 1
+color.mat[which(color.mat < 1)] <- 3
+E(g)$lty <- color.mat
+#widths[widths > 1] <- sqrt(widths)
+                        plot(g,
+                          #main = "Species interaction network",
+                          #main = title,
+                          #margin = c(0, -0.15, 0, -0.15),
+                          #xlim = c(-1.25, 1.25), 
+                         # ylim = c(-1.25, 1.25),
+                          #vertex.label = c("Radish","Field   \nbean   ", "Tomato"),
+                          vertex.label.family="Helvetica",   
+                          #vertex.label.cex = 1,
+                          #vertex.label.dist= 5,
+                          #vertex.label.degree = c(pi/2,pi/2,-pi/2),
+                          #vertex.label.color = "black",
+                          vertex.size = 1,
+                          #vertex.color = "grey80",
+                          vertex.frame.color = "transparent",
+                          edge.curved = TRUE,
+                          edge.width = widths,
+                          edge.arrow.size = 2,
+                          #edge.arrow.mode = c(0, 2, 2,
+                           #                   2, 0, 2,
+                           #                   2, 2, 0),
+                          edge.color = "black",
+                          edge.loop.angle = 0.75)
 
