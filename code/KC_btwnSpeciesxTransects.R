@@ -19,7 +19,7 @@ KC[KC$Transect2=="",]
 transects <- transects[transects!=""]
 
 years <- unique(KC$Year)
-years <- years[!is.na(years)]
+years <- years[years!=0]
 
 #what species? 
 names(KC)
@@ -90,6 +90,44 @@ dev.off()
 
 
 
+fig_loc <- "../figures/TransectSpPairs_wpmf.pdf"
+pdf(fig_loc)
+par(mfrow=c(4,4), mar=c(2,1,2,0), xpd=F, oma=c(0,1,0,1))
+#layout(matrix(c(	1,1,1,1,2,2,2,2,3,3,3,3,
+#				4,4,4,4,5,5,5,5,6,6,6,6,
+#				7,7,7,8,8,8,9,9,9,10,10,10), nrow=3, byrow=T))
+#layout.show(10)
+for (s in 1:nrow(spPairs)){
+	s1 <- spPairs[s,1]; s2 <- spPairs[s,2]
+	SpMain <- paste(s1,s2, sep="\n")
+	plot.new(); title(main=SpMain, cex.main=1.3, font.main=1, line=-5)
+	
+	for (t in transects){
+		transect <- transects_species[[t]]
+		sp2 <- transect[[s2]]$cover
+		sp1 <- transect[[s1]]$cover
+		
+		times <- 1:length(years)
+		ts <- rbind(sp1,sp2)
+		dat<-cleandat(ts, times=times, clev=1)$cdat
+		res<-wpmf(dat, times, sigmethod="quick")
+				
+		
+		#fig_loc <- paste0("../figures/",transectSp,"_wpmf.pdf")
+				
+		if(any(rowSums(ts)==0)){
+			plot(years, ts[1,], ylim=c(0,max(ts)), type='l', ylab="cover")
+			lines(years, ts[2,], lty=2)
+		} else{
+			#pdf(fig_loc)
+			plotmag(res, colorbar=(t==transects[3])); 
+			#dev.off()
+		}
+		title(main=t, cex.main=0.8, line=0.5)
+	}
+	#plot.new()
+}
+dev.off()
 
 
 
